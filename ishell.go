@@ -580,18 +580,18 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 
 func buildOptionsStrings(options []string, selected []int, index int) []string {
 	var strs []string
-	symbol := " ❯"
+	symbol := " >"
 	if runtime.GOOS == "windows" {
 		symbol = " >"
 	}
 	for i, opt := range options {
-		mark := "⬡ "
+		mark := "  "
 		if selected == nil {
 			mark = " "
 		}
 		for _, s := range selected {
 			if s == i {
-				mark = "⬢ "
+				mark = "+ "
 			}
 		}
 		if i == index {
