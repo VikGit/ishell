@@ -473,7 +473,7 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 		cur = selected[len(selected)-1]
 	}
 
-	_, curRow, err := getPosition()
+	_, curRow, err := getPosition(s)
 	if err != nil {
 		return nil
 	}
@@ -555,7 +555,7 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 			case <-refresh:
 				update()
 			case <-t.C:
-				_, rows, _ := readline.GetSize(0)
+				_, rows, _ := readline.GetSize(int(os.Stdout.Fd()))
 				if maxRows != rows {
 					maxRows = rows
 					update()
@@ -642,26 +642,31 @@ func copyShellProgressBar(s *Shell) ProgressBar {
 	return p
 }
 
-func getPosition() (int, int, error) {
+func getPosition(s *Shell) (int, int, error) {
 	state, err := readline.MakeRaw(int(os.Stdout.Fd()))
 	if err != nil {
 		return 0, 0, err
 	}
 	defer readline.Restore(int(os.Stdout.Fd()), state)
-	fmt.Printf("\033[6n")
+	s.Printf("\033[6n")
 	var out string
-	reader := bufio.NewReader(os.Stdin)
-	if err != nil {
-		return 0, 0, err
-	}
-	for {
-		b, err := reader.ReadByte()
-		if err != nil || b == 'R' {
-			break
+	if runtime.GOOS != "windows" {
+		reader := bufio.NewReader(os.Stdin)
+		if err != nil {
+			return 0, 0, err
 		}
-		if unicode.IsPrint(rune(b)) {
-			out += string(b)
+		for {
+			b, err := reader.ReadByte()
+			if err != nil || b == 'R' {
+				break
+			}
+			if unicode.IsPrint(rune(b)) {
+				out += string(b)
+			}
 		}
+	} else {
+		// TODO: somehow fix the hardcode
+		out = "[32;1"
 	}
 	var row, col int
 	_, err = fmt.Sscanf(out, "[%d;%d", &row, &col)
