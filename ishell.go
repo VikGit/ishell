@@ -478,7 +478,7 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 		return nil
 	}
 
-	_, maxRows, err := readline.GetSize(0)
+	_, maxRows, err := readline.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		return nil
 	}
@@ -643,11 +643,11 @@ func copyShellProgressBar(s *Shell) ProgressBar {
 }
 
 func getPosition() (int, int, error) {
-	state, err := readline.MakeRaw(0)
+	state, err := readline.MakeRaw(int(os.Stdout.Fd()))
 	if err != nil {
 		return 0, 0, err
 	}
-	defer readline.Restore(0, state)
+	defer readline.Restore(int(os.Stdout.Fd()), state)
 	fmt.Printf("\033[6n")
 	var out string
 	reader := bufio.NewReader(os.Stdin)
