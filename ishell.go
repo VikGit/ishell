@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	//"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -16,6 +17,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/mattn/go-colorable"
+	//"github.com/mgutz/ansi"
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 	"github.com/flynn-archive/go-shlex"
@@ -40,6 +43,7 @@ type Shell struct {
 	eof               func(*Context)
 	reader            *shellReader
 	writer            io.Writer
+	std								io.Writer
 	active            bool
 	activeMutex       sync.RWMutex
 	ignoreCase        bool
@@ -78,6 +82,7 @@ func NewWithConfig(conf *readline.Config) *Shell {
 		},
 		writer:   conf.Stdout,
 		autoHelp: true,
+		std: colorable.NewColorableStdout(),
 	}
 	shell.Actions = &shellActionsImpl{Shell: shell}
 	shell.progressBar = newProgressBar(shell)
@@ -488,7 +493,11 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 
 	// move cursor to the top
 	// TODO it happens on every update, however, some trash appears in history without this line
-	s.Print("\033[0;0H")
+	if runtime.GOOS != "windows" {
+	  s.Print("\033[0;0H")
+	} else {
+		s.ClearScreen()
+	}
 
 	offset := 0
 
@@ -497,9 +506,16 @@ func (s *Shell) multiChoice(options []string, text string, init []int, multiResu
 		if len(strs) > maxRows-1 {
 			strs = strs[offset : maxRows+offset-1]
 		}
-		s.Print("\033[0;0H")
+
+		//s.Print("\033[0;0H")
+		if runtime.GOOS != "windows" {
+			s.Print("\033[0;0H")
+		} else {
+			s.ClearScreen()
+		}
+
 		// clear from the cursor to the end of the screen
-		s.Print("\033[0J")
+	  s.Print("\033[0J")
 		s.Println(text)
 		s.Print(strings.Join(strs, "\n"))
 	}

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+
 // Actions are actions that can be performed by a shell.
 type Actions interface {
 	// ReadLine reads a line from standard input.
@@ -28,10 +29,16 @@ type Actions interface {
 	ReadMultiLines(terminator string) string
 	// Println prints to output and ends with newline character.
 	Println(val ...interface{})
+	// Println prints to output and ends with newline character.
+	Printlnw(val ...interface{})
 	// Print prints to output.
 	Print(val ...interface{})
+	// Printw prints to output on Win.
+	Printw(val ...interface{})
 	// Printf prints to output using string format.
 	Printf(format string, val ...interface{})
+	// Printf prints to output using string format.
+	Printfw(format string, val ...interface{})
 	// ShowPaged shows a paged text that is scrollable.
 	// This leverages on "less" for unix and "more" for windows.
 	ShowPaged(text string) error
@@ -104,16 +111,33 @@ func (s *shellActionsImpl) Println(val ...interface{}) {
 	fmt.Fprintln(s.writer, val...)
 }
 
+func (s *shellActionsImpl) Printlnw(val ...interface{}) {
+	s.reader.buf.Truncate(0)
+	fmt.Fprintln(s.std, val...)
+}
+
 func (s *shellActionsImpl) Print(val ...interface{}) {
 	s.reader.buf.Truncate(0)
 	fmt.Fprint(s.reader.buf, val...)
 	fmt.Fprint(s.writer, val...)
 }
 
+func (s *shellActionsImpl) Printw(val ...interface{}) {
+	s.reader.buf.Truncate(0)
+	fmt.Fprint(s.reader.buf, val...)
+	fmt.Fprint(s.std, val...)
+}
+
 func (s *shellActionsImpl) Printf(format string, val ...interface{}) {
 	s.reader.buf.Truncate(0)
 	fmt.Fprintf(s.reader.buf, format, val...)
 	fmt.Fprintf(s.writer, format, val...)
+}
+
+func (s *shellActionsImpl) Printfw(format string, val ...interface{}) {
+	s.reader.buf.Truncate(0)
+	fmt.Fprintf(s.reader.buf, format, val...)
+	fmt.Fprintf(s.std, format, val...)
 }
 
 func (s *shellActionsImpl) MultiChoice(options []string, text string) int {
